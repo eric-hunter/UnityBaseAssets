@@ -9,14 +9,14 @@
 
 namespace UnityBaseScripts
 {
-    public class SingletonScript<T> : MonoBehaviour 
+    public class SingletonScript<T> : MonoBehaviour
         where T : MonoBehaviour
     {
         #region PRIVATE PROPERTIES
 
         // Check to see if we're about to be destroyed.
         private static bool shuttingDown;
-        private static object lockObject = new object();
+        private static readonly object lockObj = new object();
         private static T instance;
 
         #endregion
@@ -34,29 +34,31 @@ namespace UnityBaseScripts
                     return null;
                 }
 
-                //single thread access to the singleton instance
-                lock (lockObject)
+                if (instance == null)
                 {
-                    if (instance == null)
+                    //single thread access to the singleton instance
+                    lock (lockObj)
                     {
-                        // Search for existing instance.
-                        instance = (T)FindObjectOfType(typeof(T));
-
-                        // Create new instance if one doesn't already exist.
                         if (instance == null)
                         {
-                            // Need to create a new GameObject to attach the singleton to.
-                            var singletonObject = new GameObject();
-                            instance = singletonObject.AddComponent<T>();
-                            singletonObject.name = typeof(T) + " (Singleton)";
+                            // Search for existing instance.
+                            instance = (T)FindObjectOfType(typeof(T));
 
-                            // Make instance persistent across scene changes.
-                            DontDestroyOnLoad(singletonObject);
+                            // Create new instance if one doesn't already exist.
+                            if (instance == null)
+                            {
+                                // Need to create a new GameObject to attach the singleton to.
+                                var singletonObject = new GameObject();
+                                instance = singletonObject.AddComponent<T>();
+                                singletonObject.name = typeof(T) + " (Singleton)";
+
+                                // Make instance persistent across scene changes.
+                                DontDestroyOnLoad(singletonObject);
+                            }
                         }
                     }
-
-                    return instance;
                 }
+                return instance;
             }
         }
 
